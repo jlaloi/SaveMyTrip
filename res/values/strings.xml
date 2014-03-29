@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Save My Trip</string>
+    <string name="service_name">Save My Trip Service</string>
+    <string name="off">Not saving</string>
+    <string name="notavailable">Location not available</string>
+    <string name="waiting">Waiting for location</string>
+    <string name="filename">SaveMyTrip.csv</string>
+
+</resources>

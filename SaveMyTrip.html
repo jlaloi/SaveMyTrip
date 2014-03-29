@@ -1,0 +1,40 @@
+﻿<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Save My Trip</title>
+		<style>
+			html, body, #map_canvas {
+				height:100%;
+				width:100%;
+				margin:0;
+			}
+		</style>
+		<script src="https://maps.google.com/maps/api/js?sensor=false"></script>
+		<script>
+			function initialize() {	
+				bounds = new google.maps.LatLngBounds();
+				map = new google.maps.Map(document.getElementById('map_canvas'), {maxZoom:20, scaleControl:true, mapTypeId:google.maps.MapTypeId.ROADMAP});	
+				var txtFile = new XMLHttpRequest();
+				txtFile.open("GET", window.location.href.split("#")[1], true);
+				txtFile.onreadystatechange = function() {
+					if (txtFile.readyState === 4 && txtFile.status === 200) { 
+						lines = txtFile.responseText.split("\n");
+						for (var i = 0; i < lines.length; i++) {
+							line = lines[i].split(";");
+							if (line.length > 2){ 
+								pos = new google.maps.LatLng(line[1], line[2]);
+								bounds.extend(pos);
+								new google.maps.Marker({position:pos, title:line[0], map:map});
+							}
+						}
+						map.fitBounds(bounds);
+					}
+				}
+				txtFile.send(null);
+			}
+		</script>
+	</head>
+	<body onload="initialize()">
+		<div id="map_canvas"></div>
+	</body>
+</html>
