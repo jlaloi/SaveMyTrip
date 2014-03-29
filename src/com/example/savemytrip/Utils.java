@@ -24,7 +24,7 @@ public class Utils {
 	public static final String PREFS_NAME = "MyPrefsFile";
 
 	public static enum Configuration {
-		running, lastSaveTime
+		running, remaining
 	};
 
 	static {

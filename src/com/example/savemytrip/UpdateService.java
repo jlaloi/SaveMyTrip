@@ -27,10 +27,10 @@ public class UpdateService extends Service implements LocationListener {
 
 	private final static IntentFilter sIntentFilter;
 
+	private final static int counter = 16;
+
 	private LocationManager locationManager;
 	private String provider;
-	private Location currentPosition;
-	private boolean listening = false;
 	private File saveFile;
 	private SharedPreferences settings;
 
@@ -57,69 +57,37 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public void onStart(Intent intent, int startId) {
-		Log.d(LOG, "onStart");
 		if (intent != null) {
 			update();
-			updateDisplayedLocation();
 		}
 	}
 
 	public void onDestroy() {
-		Log.d(LOG, "onDestroy");
 		super.onDestroy();
 		unregisterReceiver(mTimeChangedReceiver);
 	}
 
-	public void manageLocationManager() {
-		if (isRunning() && !listening) {
-			Criteria criteria = new Criteria();
-			provider = locationManager.getBestProvider(criteria, false);
-			locationManager.requestLocationUpdates(provider, 10000, 50, this);
-			listening = true;
-		} else if (!isRunning() && listening) {
-			locationManager.removeUpdates(this);
-			listening = false;
-			currentPosition = null;
-			setSavedTime(-1);
-		}
-
-	}
-
 	private void update() {
 		Log.d(LOG, "update");
-		manageLocationManager();
 		if (isRunning()) {
-			if (currentPosition != null) {
-				if (getSavedTime() != currentPosition.getTime()) {
-					Utils.addToFile(saveFile, currentPosition);
-					updateText(R.id.saved, Utils.formatDate(currentPosition));
-					setSavedTime(currentPosition.getTime());
-				}
+			LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+			if (!service.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+				updateText(R.id.saved, getResources().getString(R.string.activiateGPS));
 			} else {
-				LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-				if (!service.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-					updateText(R.id.saved, getResources().getString(R.string.activiateGPS));
-				} else {
+				int remaining = settings.getInt(Configuration.remaining.toString(), 0) - 1;
+				Log.i(LOG, "update reamining " + remaining);
+				if (remaining <= 0) {
+					Criteria criteria = new Criteria();
+					provider = locationManager.getBestProvider(criteria, false);
+					locationManager.requestLocationUpdates(provider, 10000, 50, this);
 					updateText(R.id.saved, getResources().getString(R.string.waiting));
+				} else {
+					updateText(R.id.saved, getResources().getString(R.string.next, remaining));
+					setRemaining(remaining);
 				}
 			}
-		}
-	}
-
-	private void updateDisplayedLocation() {
-		Log.d(LOG, "updateDisplayedLocation");
-		if (isRunning()) {
-			if (currentPosition != null) {
-				updateText(R.id.current, Utils.formatLocation(currentPosition));
-				if (getSavedTime() == -1) {
-					update();
-				}
-			} else {
-				updateText(R.id.current, getResources().getString(R.string.notavailable));
-			}
-			if (getSavedTime() == -1 && currentPosition != null) {
-				update();
-			}
+		}else{
+			setRemaining(counter);
 		}
 	}
 
@@ -135,26 +103,23 @@ public class UpdateService extends Service implements LocationListener {
 
 	}
 
-	private void updateDisplayedLocation(Location location) {
-		Log.d(LOG, "updateDisplayedLocation " + location);
-		currentPosition = location;
-		updateDisplayedLocation();
-	}
-
 	public IBinder onBind(Intent intent) {
 		return null;
 	}
 
 	private final BroadcastReceiver mTimeChangedReceiver = new BroadcastReceiver() {
 		public void onReceive(Context context, Intent intent) {
-			Log.d(LOG, "onReceive");
+			Log.w(LOG, "onReceive");
 			update();
 		}
 	};
 
 	public void onLocationChanged(Location location) {
-		Log.d(LOG, "onLocationChanged " + location);
-		updateDisplayedLocation(location);
+		Log.w(LOG, "onLocationChanged " + location);
+		Utils.addToFile(saveFile, location);
+		locationManager.removeUpdates(this);
+		setRemaining(counter);
+		update();
 	}
 
 	public void onProviderDisabled(String provider) {
@@ -176,14 +141,14 @@ public class UpdateService extends Service implements LocationListener {
 		editor.commit();
 	}
 
-	public long getSavedTime() {
-		return settings.getLong(Configuration.lastSaveTime.toString(), -1);
+	public int getRemaininge() {
+		return settings.getInt(Configuration.remaining.toString(), counter);
 	}
 
-	public void setSavedTime(long time) {
+	public void setRemaining(int time) {
 		Log.i(LOG, "Set saved time " + time);
 		SharedPreferences.Editor editor = settings.edit();
-		editor.putLong(Configuration.lastSaveTime.toString(), time);
+		editor.putInt(Configuration.remaining.toString(), time);
 		editor.commit();
 	}
 
