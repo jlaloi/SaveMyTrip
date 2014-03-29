@@ -9,6 +9,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -20,15 +21,18 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
 
+import com.example.savemytrip.Utils.Configuration;
+
 public class UpdateService extends Service implements LocationListener {
 
 	private final static IntentFilter sIntentFilter;
 
 	private LocationManager locationManager;
 	private String provider;
-	private Location currentPosition, savedPosition;
+	private Location currentPosition;
 	private boolean listening = false;
 	private File saveFile;
+	private SharedPreferences settings;
 
 	private final static String LOG = "UpdateService";
 
@@ -46,6 +50,7 @@ public class UpdateService extends Service implements LocationListener {
 			}
 		} catch (Exception ignore) {
 		}
+		settings = getSharedPreferences(Utils.PREFS_NAME, 0);
 		registerReceiver(mTimeChangedReceiver, sIntentFilter);
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 		saveFile = new File(Environment.getExternalStorageDirectory() + File.separator + getResources().getString(R.string.filename));
@@ -66,16 +71,16 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public void manageLocationManager() {
-		if (Factory.isRunning() && !listening) {
+		if (isRunning() && !listening) {
 			Criteria criteria = new Criteria();
 			provider = locationManager.getBestProvider(criteria, false);
 			locationManager.requestLocationUpdates(provider, 10000, 50, this);
 			listening = true;
-		} else if (!Factory.isRunning() && listening) {
+		} else if (!isRunning() && listening) {
 			locationManager.removeUpdates(this);
 			listening = false;
 			currentPosition = null;
-			savedPosition = null;
+			setSavedTime(-1);
 		}
 
 	}
@@ -83,31 +88,36 @@ public class UpdateService extends Service implements LocationListener {
 	private void update() {
 		Log.d(LOG, "update");
 		manageLocationManager();
-		if (Factory.isRunning()) {
+		if (isRunning()) {
 			if (currentPosition != null) {
-				if(savedPosition == null || (savedPosition.getTime() != currentPosition.getTime())){
+				if (getSavedTime() != currentPosition.getTime()) {
 					Utils.addToFile(saveFile, currentPosition);
 					updateText(R.id.saved, Utils.formatDate(currentPosition));
-					savedPosition = currentPosition;
+					setSavedTime(currentPosition.getTime());
 				}
 			} else {
-				updateText(R.id.saved, getResources().getString(R.string.waiting));
+				LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+				if (!service.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+					updateText(R.id.saved, getResources().getString(R.string.activiateGPS));
+				} else {
+					updateText(R.id.saved, getResources().getString(R.string.waiting));
+				}
 			}
 		}
 	}
 
 	private void updateDisplayedLocation() {
 		Log.d(LOG, "updateDisplayedLocation");
-		if (Factory.isRunning()) {
+		if (isRunning()) {
 			if (currentPosition != null) {
 				updateText(R.id.current, Utils.formatLocation(currentPosition));
-				if (savedPosition == null) {
+				if (getSavedTime() == -1) {
 					update();
 				}
 			} else {
 				updateText(R.id.current, getResources().getString(R.string.notavailable));
 			}
-			if (savedPosition == null && currentPosition != null) {
+			if (getSavedTime() == -1 && currentPosition != null) {
 				update();
 			}
 		}
@@ -154,6 +164,27 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public void onStatusChanged(String provider, int status, Bundle extras) {
+	}
+
+	public boolean isRunning() {
+		return settings.getBoolean(Configuration.running.toString(), false);
+	}
+
+	public void setRunning(boolean bool) {
+		SharedPreferences.Editor editor = settings.edit();
+		editor.putBoolean(Configuration.running.toString(), bool);
+		editor.commit();
+	}
+
+	public long getSavedTime() {
+		return settings.getLong(Configuration.lastSaveTime.toString(), -1);
+	}
+
+	public void setSavedTime(long time) {
+		Log.i(LOG, "Set saved time " + time);
+		SharedPreferences.Editor editor = settings.edit();
+		editor.putLong(Configuration.lastSaveTime.toString(), time);
+		editor.commit();
 	}
 
 }

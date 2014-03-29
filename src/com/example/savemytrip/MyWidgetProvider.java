@@ -6,21 +6,27 @@ import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.widget.RemoteViews;
+
+import com.example.savemytrip.Utils.Configuration;
 
 public class MyWidgetProvider extends AppWidgetProvider {
 
 	public static final String LOG = "MyWidgetProvider";
 
+	private SharedPreferences settings;
+
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		Log.d(LOG, "onUpdate");
-		Factory.setRunning(!Factory.isRunning());
+		settings = context.getSharedPreferences(Utils.PREFS_NAME, 0);
+		setRunning(!isRunning());
 		ComponentName thisWidget = new ComponentName(context, MyWidgetProvider.class);
 		int[] allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
 		for (int widgetId : allWidgetIds) {
 			RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
-			if (!Factory.isRunning()) {
+			if (!isRunning()) {
 				remoteViews.setTextViewText(R.id.current, context.getString(R.string.app_name));
 				remoteViews.setTextViewText(R.id.saved, context.getString(R.string.off));
 			}
@@ -35,6 +41,17 @@ public class MyWidgetProvider extends AppWidgetProvider {
 		Intent intent = new Intent(context.getApplicationContext(), UpdateService.class);
 		intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds);
 		context.startService(intent);
+	}
+
+	public boolean isRunning() {
+		return settings.getBoolean(Configuration.running.toString(), false);
+	}
+
+	public void setRunning(boolean bool) {
+		Log.i(LOG, "Set running " + bool);
+		SharedPreferences.Editor editor = settings.edit();
+		editor.putBoolean(Configuration.running.toString(), bool);
+		editor.commit();
 	}
 
 }

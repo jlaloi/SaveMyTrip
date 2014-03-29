@@ -7,5 +7,6 @@
     <string name="notavailable">Location not available</string>
     <string name="waiting">Waiting for location</string>
     <string name="filename">SaveMyTrip.csv</string>
+    <string name="activiateGPS">Thanks to activate the GPS</string>
 
 </resources>

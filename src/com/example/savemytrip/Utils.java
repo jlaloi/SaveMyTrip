@@ -21,6 +21,11 @@ public class Utils {
 	public static NumberFormat formatter;
 	public static final String colSep = ";";
 	public static final String lineSep = "\n";
+	public static final String PREFS_NAME = "MyPrefsFile";
+
+	public static enum Configuration {
+		running, lastSaveTime
+	};
 
 	static {
 		dateFormat = new SimpleDateFormat("HH:mm (dd/MM)", Locale.getDefault());
