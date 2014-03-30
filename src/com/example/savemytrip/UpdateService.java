@@ -1,7 +1,5 @@
 package com.example.savemytrip;
 
-import java.io.File;
-
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
@@ -16,7 +14,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -31,7 +28,6 @@ public class UpdateService extends Service implements LocationListener {
 
 	private LocationManager locationManager;
 	private String provider;
-	private File saveFile;
 	private SharedPreferences settings;
 
 	private final static String LOG = "UpdateService";
@@ -53,7 +49,6 @@ public class UpdateService extends Service implements LocationListener {
 		settings = getSharedPreferences(Utils.PREFS_NAME, 0);
 		registerReceiver(mTimeChangedReceiver, sIntentFilter);
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		saveFile = new File(Environment.getExternalStorageDirectory() + File.separator + getResources().getString(R.string.filename));
 	}
 
 	public void onStart(Intent intent, int startId) {
@@ -86,7 +81,7 @@ public class UpdateService extends Service implements LocationListener {
 					setRemaining(remaining);
 				}
 			}
-		}else{
+		} else {
 			setRemaining(counter);
 		}
 	}
@@ -116,7 +111,7 @@ public class UpdateService extends Service implements LocationListener {
 
 	public void onLocationChanged(Location location) {
 		Log.w(LOG, "onLocationChanged " + location);
-		Utils.addToFile(saveFile, location);
+		Utils.addToFile(Factory.getSaveFile(), location);
 		locationManager.removeUpdates(this);
 		setRemaining(counter);
 		update();

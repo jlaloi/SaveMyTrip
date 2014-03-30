@@ -44,7 +44,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
 	}
 
 	public boolean isRunning() {
-		return settings.getBoolean(Configuration.running.toString(), false);
+		return settings.getBoolean(Configuration.running.toString(), true);
 	}
 
 	public void setRunning(boolean bool) {

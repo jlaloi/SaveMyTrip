@@ -1,14 +1,20 @@
 package com.example.savemytrip;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import android.location.Location;
@@ -19,8 +25,6 @@ public class Utils {
 	private final static String LOG = "Utils";
 	public static SimpleDateFormat dateFormat, dateSaveFormat;
 	public static NumberFormat formatter;
-	public static final String colSep = ";";
-	public static final String lineSep = "\n";
 	public static final String PREFS_NAME = "MyPrefsFile";
 
 	public static enum Configuration {
@@ -47,8 +51,8 @@ public class Utils {
 	}
 
 	public static void addToFile(File file, Location location) {
-		String toSave = dateSaveFormat.format(new Date(location.getTime())) + colSep + location.getLatitude() + colSep + location.getLongitude() + colSep + location.getAccuracy() + colSep + location.getAltitude();
-		addToFile(file, toSave + lineSep, true);
+		String toSave = dateSaveFormat.format(new Date(location.getTime())) + Factory.columnSeparator + location.getLatitude() + Factory.columnSeparator + location.getLongitude() + Factory.columnSeparator + location.getAccuracy() + Factory.columnSeparator + location.getAltitude();
+		addToFile(file, toSave + "\n", true);
 	}
 
 	public static String formatDate(Date date) {
@@ -68,4 +72,30 @@ public class Utils {
 		return formatNumber(location.getLatitude()) + ", " + formatNumber(location.getLongitude());
 	}
 
+	public static List<File> listFiles(File path) {
+		List<File> result = new ArrayList<File>();
+		for (File file : path.listFiles()) {
+			if (file.isFile()) {
+				result.add(file);
+			}
+		}
+		return result;
+	}
+
+	public static List<String> getFileLines(File file) {
+		List<String> result = new ArrayList<String>();
+		try {
+			FileInputStream fstream = new FileInputStream(file);
+			DataInputStream in = new DataInputStream(fstream);
+			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			String line;
+			while ((line = br.readLine()) != null) {
+				result.add(line);
+			}
+			in.close();
+		} catch (Exception e) {
+			Log.e(LOG, "getFileLines", e);
+		}
+		return result;
+	}
 }

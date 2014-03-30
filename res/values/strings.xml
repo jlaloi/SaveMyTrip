@@ -5,8 +5,10 @@
     <string name="service_name">Save My Trip Service</string>
     <string name="off">Not running</string>
     <string name="waiting">Waiting for location</string>
-    <string name="filename">SaveMyTrip.csv</string>
     <string name="activiateGPS">Thanks to activate the GPS</string>
     <string name="next">Next request in %1$s mn</string>
+    <string name="loading">Loading %1$s</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
 
 </resources>
