@@ -24,7 +24,9 @@ public class UpdateService extends Service implements LocationListener {
 
 	private final static IntentFilter sIntentFilter;
 
-	private final static int counter = 16;
+	private final static int counter = 31;
+
+	public static final String ACTION_UPDATE = "com.example.savemytrip.action.UPDATE";
 
 	private LocationManager locationManager;
 	private String provider;
@@ -52,7 +54,15 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public void onStart(Intent intent, int startId) {
-		if (intent != null) {
+		Log.w(LOG, "onStart " + intent + "");
+		if (intent != null && ACTION_UPDATE.equals(intent.getAction())) {
+			if (!isRunning()) {
+				locationManager.removeUpdates(this);
+				setRemaining(1);
+			} else {
+				update();
+			}
+		} else if (intent != null) {
 			update();
 		}
 	}
@@ -65,24 +75,21 @@ public class UpdateService extends Service implements LocationListener {
 	private void update() {
 		Log.d(LOG, "update");
 		if (isRunning()) {
+			int remaining = settings.getInt(Configuration.remaining.toString(), 0) - 1;
 			LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
 			if (!service.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 				updateText(R.id.saved, getResources().getString(R.string.activiateGPS));
 			} else {
-				int remaining = settings.getInt(Configuration.remaining.toString(), 0) - 1;
-				Log.i(LOG, "update reamining " + remaining);
-				if (remaining <= 0) {
+				if (remaining == 0) {
 					Criteria criteria = new Criteria();
 					provider = locationManager.getBestProvider(criteria, false);
 					locationManager.requestLocationUpdates(provider, 10000, 50, this);
 					updateText(R.id.saved, getResources().getString(R.string.waiting));
-				} else {
+				} else if (remaining > 0) {
 					updateText(R.id.saved, getResources().getString(R.string.next, remaining));
-					setRemaining(remaining);
 				}
+				setRemaining(remaining);
 			}
-		} else {
-			setRemaining(counter);
 		}
 	}
 
@@ -95,11 +102,6 @@ public class UpdateService extends Service implements LocationListener {
 			remoteViews.setTextViewText(field, text);
 			appWidgetManager.updateAppWidget(widgetId, remoteViews);
 		}
-
-	}
-
-	public IBinder onBind(Intent intent) {
-		return null;
 	}
 
 	private final BroadcastReceiver mTimeChangedReceiver = new BroadcastReceiver() {
@@ -113,8 +115,24 @@ public class UpdateService extends Service implements LocationListener {
 		Log.w(LOG, "onLocationChanged " + location);
 		Utils.addToFile(Factory.getSaveFile(), location);
 		locationManager.removeUpdates(this);
+		updateText(R.id.current, Utils.formatLocation(location));
 		setRemaining(counter);
 		update();
+	}
+
+	public boolean isRunning() {
+		return settings.getBoolean(Configuration.running.toString(), false);
+	}
+
+	public int getRemaining() {
+		return settings.getInt(Configuration.remaining.toString(), counter);
+	}
+
+	public void setRemaining(int time) {
+		Log.i(LOG, "Set remaining time " + time);
+		SharedPreferences.Editor editor = settings.edit();
+		editor.putInt(Configuration.remaining.toString(), time);
+		editor.commit();
 	}
 
 	public void onProviderDisabled(String provider) {
@@ -126,25 +144,8 @@ public class UpdateService extends Service implements LocationListener {
 	public void onStatusChanged(String provider, int status, Bundle extras) {
 	}
 
-	public boolean isRunning() {
-		return settings.getBoolean(Configuration.running.toString(), false);
-	}
-
-	public void setRunning(boolean bool) {
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putBoolean(Configuration.running.toString(), bool);
-		editor.commit();
-	}
-
-	public int getRemaininge() {
-		return settings.getInt(Configuration.remaining.toString(), counter);
-	}
-
-	public void setRemaining(int time) {
-		Log.i(LOG, "Set saved time " + time);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putInt(Configuration.remaining.toString(), time);
-		editor.commit();
+	public IBinder onBind(Intent intent) {
+		return null;
 	}
 
 }

@@ -16,31 +16,46 @@ public class MyWidgetProvider extends AppWidgetProvider {
 
 	public static final String LOG = "MyWidgetProvider";
 
+	public static String CLICK_ACTION = "CLICK_ACTION";
+
 	private SharedPreferences settings;
 
 	public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 		Log.d(LOG, "onUpdate");
-		settings = context.getSharedPreferences(Utils.PREFS_NAME, 0);
-		setRunning(!isRunning());
+		Intent intent = new Intent(context, MyWidgetProvider.class);
+		intent.setAction(CLICK_ACTION);
+		PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0);
 		ComponentName thisWidget = new ComponentName(context, MyWidgetProvider.class);
 		int[] allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
 		for (int widgetId : allWidgetIds) {
 			RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
-			if (!isRunning()) {
-				remoteViews.setTextViewText(R.id.current, context.getString(R.string.app_name));
-				remoteViews.setTextViewText(R.id.saved, context.getString(R.string.off));
-			}
-			Intent widgetIntent = new Intent(context, MyWidgetProvider.class);
-			widgetIntent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
-			widgetIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds);
-			PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, widgetIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			remoteViews.setOnClickPendingIntent(R.id.saved, pendingIntent);
-			remoteViews.setOnClickPendingIntent(R.id.current, pendingIntent);
+			remoteViews.setOnClickPendingIntent(R.id.widgetLinearLayout, pendingIntent);
 			appWidgetManager.updateAppWidget(widgetId, remoteViews);
 		}
-		Intent intent = new Intent(context.getApplicationContext(), UpdateService.class);
-		intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds);
-		context.startService(intent);
+		Intent serviceIntent = new Intent(context.getApplicationContext(), UpdateService.class);
+		serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds);
+		context.startService(serviceIntent);
+	}
+
+	public void onReceive(Context context, Intent intent) {
+		super.onReceive(context, intent);
+		if (intent.getAction().equals(CLICK_ACTION)) {
+			Log.i(LOG, CLICK_ACTION);
+			settings = context.getSharedPreferences(Utils.PREFS_NAME, 0);
+			setRunning(!isRunning());
+			if (!isRunning()) {
+				AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
+				ComponentName thisWidget = new ComponentName(context, MyWidgetProvider.class);
+				int[] allWidgetIds = appWidgetManager.getAppWidgetIds(thisWidget);
+				for (int widgetId : allWidgetIds) {
+					RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.widget_layout);
+					remoteViews.setTextViewText(R.id.current, context.getString(R.string.app_name));
+					remoteViews.setTextViewText(R.id.saved, context.getString(R.string.off));
+					appWidgetManager.updateAppWidget(widgetId, remoteViews);
+				}
+			}
+			context.startService(new Intent(UpdateService.ACTION_UPDATE));
+		}
 	}
 
 	public boolean isRunning() {

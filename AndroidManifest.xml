@@ -42,8 +42,12 @@
         <service
             android:name="com.example.savemytrip.UpdateService"
             android:enabled="true"
+            android:exported="false"
             android:icon="@drawable/ic_launcher"
             android:label="@string/service_name" >
+            <intent-filter>
+                <action android:name="com.example.savemytrip.action.UPDATE"/>
+            </intent-filter>
         </service>
 
         <activity
