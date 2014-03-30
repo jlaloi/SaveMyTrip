@@ -2,11 +2,9 @@ package com.example.savemytrip;
 
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -22,22 +20,11 @@ import com.example.savemytrip.Utils.Configuration;
 
 public class UpdateService extends Service implements LocationListener {
 
-	private final static IntentFilter sIntentFilter;
-
-	private final static int counter = 31;
-
 	public static final String ACTION_UPDATE = "com.example.savemytrip.action.UPDATE";
+	public static final String LOG = "UpdateService";
 
 	private LocationManager locationManager;
-	private String provider;
 	private SharedPreferences settings;
-
-	private final static String LOG = "UpdateService";
-
-	static {
-		sIntentFilter = new IntentFilter();
-		sIntentFilter.addAction(Intent.ACTION_TIME_TICK);
-	}
 
 	public void onCreate() {
 		super.onCreate();
@@ -49,12 +36,11 @@ public class UpdateService extends Service implements LocationListener {
 		} catch (Exception ignore) {
 		}
 		settings = getSharedPreferences(Utils.PREFS_NAME, 0);
-		registerReceiver(mTimeChangedReceiver, sIntentFilter);
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 	}
 
 	public void onStart(Intent intent, int startId) {
-		Log.w(LOG, "onStart " + intent + "");
+		Log.w(LOG, "onStart " + intent);
 		if (intent != null && ACTION_UPDATE.equals(intent.getAction())) {
 			if (!isRunning()) {
 				locationManager.removeUpdates(this);
@@ -67,11 +53,6 @@ public class UpdateService extends Service implements LocationListener {
 		}
 	}
 
-	public void onDestroy() {
-		super.onDestroy();
-		unregisterReceiver(mTimeChangedReceiver);
-	}
-
 	private void update() {
 		Log.d(LOG, "update");
 		if (isRunning()) {
@@ -82,7 +63,7 @@ public class UpdateService extends Service implements LocationListener {
 			} else {
 				if (remaining == 0) {
 					Criteria criteria = new Criteria();
-					provider = locationManager.getBestProvider(criteria, false);
+					String provider = locationManager.getBestProvider(criteria, false);
 					locationManager.requestLocationUpdates(provider, 10000, 50, this);
 					updateText(R.id.saved, getResources().getString(R.string.waiting));
 				} else if (remaining > 0) {
@@ -104,20 +85,13 @@ public class UpdateService extends Service implements LocationListener {
 		}
 	}
 
-	private final BroadcastReceiver mTimeChangedReceiver = new BroadcastReceiver() {
-		public void onReceive(Context context, Intent intent) {
-			Log.w(LOG, "onReceive");
-			update();
-		}
-	};
-
 	public void onLocationChanged(Location location) {
 		Log.w(LOG, "onLocationChanged " + location);
 		Utils.addToFile(Factory.getSaveFile(), location);
 		locationManager.removeUpdates(this);
 		updateText(R.id.current, Utils.formatLocation(location));
-		setRemaining(counter);
-		update();
+		updateText(R.id.saved, getString(R.string.saved));
+		setRemaining(Factory.cycleTime);
 	}
 
 	public boolean isRunning() {
@@ -125,7 +99,7 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public int getRemaining() {
-		return settings.getInt(Configuration.remaining.toString(), counter);
+		return settings.getInt(Configuration.remaining.toString(), Factory.cycleTime);
 	}
 
 	public void setRemaining(int time) {

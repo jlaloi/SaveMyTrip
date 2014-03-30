@@ -21,13 +21,11 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MainActivity extends Activity {
 
-	private GoogleMap googleMap;
-
-	private List<File> files;
-
 	public static final String LOG = "MainActivity";
-
 	public static File selectedFile;
+
+	private GoogleMap googleMap;
+	private List<File> files;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

@@ -22,10 +22,11 @@ import android.util.Log;
 
 public class Utils {
 
-	private final static String LOG = "Utils";
+	public static final String LOG = "Utils";
+	public static final String PREFS_NAME = "MyPrefsFile";
+
 	public static SimpleDateFormat dateFormat, dateSaveFormat;
 	public static NumberFormat formatter;
-	public static final String PREFS_NAME = "MyPrefsFile";
 
 	public static enum Configuration {
 		running, remaining

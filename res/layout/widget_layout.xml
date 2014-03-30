@@ -4,8 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="8dip"
-    android:orientation="vertical"
-    android:background="@drawable/myshape" >
+    android:background="@drawable/myshape"
+    android:orientation="vertical" >
 
     <TextView
         android:id="@+id/current"
@@ -13,20 +13,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center_horizontal|center_vertical"
         android:layout_margin="4dip"
+        android:gravity="center_horizontal|center_vertical"
         android:text="@string/app_name" >
     </TextView>
-    
-     <TextView
+
+    <TextView
         android:id="@+id/saved"
         style="@android:style/TextAppearance.Medium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:gravity="center_horizontal|center_vertical"
         android:layout_margin="4dip"
+        android:gravity="center_horizontal|center_vertical"
         android:text="@string/off" >
     </TextView>
 
-</LinearLayout> 
+</LinearLayout>

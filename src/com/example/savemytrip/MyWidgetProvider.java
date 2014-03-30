@@ -1,5 +1,8 @@
 package com.example.savemytrip;
 
+import java.util.Calendar;
+
+import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -32,9 +35,12 @@ public class MyWidgetProvider extends AppWidgetProvider {
 			remoteViews.setOnClickPendingIntent(R.id.widgetLinearLayout, pendingIntent);
 			appWidgetManager.updateAppWidget(widgetId, remoteViews);
 		}
+		// Set an alarm running the service
+		Calendar cal = Calendar.getInstance();
 		Intent serviceIntent = new Intent(context.getApplicationContext(), UpdateService.class);
-		serviceIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, allWidgetIds);
-		context.startService(serviceIntent);
+		PendingIntent pintent = PendingIntent.getService(context.getApplicationContext(), 0, serviceIntent, 0);
+		AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 60 * 1000, pintent);
 	}
 
 	public void onReceive(Context context, Intent intent) {
@@ -59,7 +65,7 @@ public class MyWidgetProvider extends AppWidgetProvider {
 	}
 
 	public boolean isRunning() {
-		return settings.getBoolean(Configuration.running.toString(), true);
+		return settings.getBoolean(Configuration.running.toString(), false);
 	}
 
 	public void setRunning(boolean bool) {
