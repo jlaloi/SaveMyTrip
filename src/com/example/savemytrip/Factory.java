@@ -12,7 +12,7 @@ public class Factory {
 
 	public static final String saveFileName = "SaveMyTrip.csv";
 
-	public static final int cycleTime = 15;
+	public static final int cycleTime = 20;
 
 	private static File localDirecory, saveFile;
 

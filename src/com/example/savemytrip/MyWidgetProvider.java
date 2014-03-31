@@ -35,12 +35,6 @@ public class MyWidgetProvider extends AppWidgetProvider {
 			remoteViews.setOnClickPendingIntent(R.id.widgetLinearLayout, pendingIntent);
 			appWidgetManager.updateAppWidget(widgetId, remoteViews);
 		}
-		// Set an alarm running the service
-		Calendar cal = Calendar.getInstance();
-		Intent serviceIntent = new Intent(context.getApplicationContext(), UpdateService.class);
-		PendingIntent pintent = PendingIntent.getService(context.getApplicationContext(), 0, serviceIntent, 0);
-		AlarmManager alarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-		alarm.setRepeating(AlarmManager.RTC_WAKEUP, cal.getTimeInMillis(), 60 * 1000, pintent);
 	}
 
 	public void onReceive(Context context, Intent intent) {
@@ -59,9 +53,30 @@ public class MyWidgetProvider extends AppWidgetProvider {
 					remoteViews.setTextViewText(R.id.saved, context.getString(R.string.off));
 					appWidgetManager.updateAppWidget(widgetId, remoteViews);
 				}
+				stopServiceUpdate(context);
+			} else {
+				startServiceUpdate(context);
 			}
 			context.startService(new Intent(UpdateService.ACTION_UPDATE));
 		}
+	}
+
+	public void startServiceUpdate(Context context) {
+		Log.i(LOG, "startServiceUpdate");
+		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, Calendar.getInstance().getTimeInMillis(), 60 * 1000, getServiceUpdate(context));
+	}
+
+	public void stopServiceUpdate(Context context) {
+		Log.i(LOG, "stopServiceUpdate");
+		AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+		alarmManager.cancel(getServiceUpdate(context));
+	}
+
+	public PendingIntent getServiceUpdate(Context context) {
+		Intent serviceIntent = new Intent(context, UpdateService.class);
+		PendingIntent pendingIntent = PendingIntent.getService(context, 0, serviceIntent, 0);
+		return pendingIntent;
 	}
 
 	public boolean isRunning() {

@@ -37,6 +37,7 @@ public class UpdateService extends Service implements LocationListener {
 		}
 		settings = getSharedPreferences(Utils.PREFS_NAME, 0);
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+		setRemaining(1);
 	}
 
 	public void onStart(Intent intent, int startId) {
@@ -99,7 +100,7 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public int getRemaining() {
-		return settings.getInt(Configuration.remaining.toString(), Factory.cycleTime);
+		return settings.getInt(Configuration.remaining.toString(), 1);
 	}
 
 	public void setRemaining(int time) {
