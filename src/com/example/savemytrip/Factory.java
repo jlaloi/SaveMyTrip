@@ -14,6 +14,8 @@ public class Factory {
 
 	public static final int cycleTime = 20;
 
+	public static final int gpsQueryNumber = 3;
+
 	private static File localDirecory, saveFile;
 
 	static {

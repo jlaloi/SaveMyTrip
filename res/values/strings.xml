@@ -5,6 +5,7 @@
     <string name="service_name">Save My Trip Service</string>
     <string name="off">Not running</string>
     <string name="waiting">Waiting for location</string>
+    <string name="waiting_iteration">Waiting for location (%1$s)</string>
     <string name="activiateGPS">Thanks to activate the GPS</string>
     <string name="next">Next request in %1$s mn</string>
     <string name="loading">Loading %1$s</string>

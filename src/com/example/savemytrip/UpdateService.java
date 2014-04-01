@@ -25,6 +25,7 @@ public class UpdateService extends Service implements LocationListener {
 
 	private LocationManager locationManager;
 	private SharedPreferences settings;
+	private int gpsQueries = 0;
 
 	public void onCreate() {
 		super.onCreate();
@@ -46,6 +47,7 @@ public class UpdateService extends Service implements LocationListener {
 			if (!isRunning()) {
 				locationManager.removeUpdates(this);
 				setRemaining(1);
+				gpsQueries = 0;
 			} else {
 				update();
 			}
@@ -65,10 +67,12 @@ public class UpdateService extends Service implements LocationListener {
 				if (remaining == 0) {
 					Criteria criteria = new Criteria();
 					String provider = locationManager.getBestProvider(criteria, false);
-					locationManager.requestLocationUpdates(provider, 10000, 50, this);
+					locationManager.requestLocationUpdates(provider, 1000, 0, this);
 					updateText(R.id.saved, getResources().getString(R.string.waiting));
 				} else if (remaining > 0) {
 					updateText(R.id.saved, getResources().getString(R.string.next, remaining));
+				} else {
+					updateText(R.id.saved, getResources().getString(R.string.waiting_iteration, Math.abs(remaining)));
 				}
 				setRemaining(remaining);
 			}
@@ -87,12 +91,16 @@ public class UpdateService extends Service implements LocationListener {
 	}
 
 	public void onLocationChanged(Location location) {
-		Log.w(LOG, "onLocationChanged " + location);
-		Utils.addToFile(Factory.getSaveFile(), location);
-		locationManager.removeUpdates(this);
-		updateText(R.id.current, Utils.formatLocation(location));
-		updateText(R.id.saved, getString(R.string.saved));
-		setRemaining(Factory.cycleTime);
+		Log.w(LOG, "onLocationChanged " + location + " (" + gpsQueries + ")");
+		gpsQueries++;
+		if (gpsQueries == Factory.gpsQueryNumber) {
+			Utils.addToFile(Factory.getSaveFile(), location);
+			locationManager.removeUpdates(this);
+			updateText(R.id.current, Utils.formatLocation(location));
+			updateText(R.id.saved, getString(R.string.saved));
+			setRemaining(Factory.cycleTime);
+			gpsQueries = 0;
+		}
 	}
 
 	public boolean isRunning() {
