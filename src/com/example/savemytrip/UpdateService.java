@@ -11,6 +11,7 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.location.LocationProvider;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
@@ -25,7 +26,7 @@ public class UpdateService extends Service implements LocationListener {
 
 	private LocationManager locationManager;
 	private SharedPreferences settings;
-	private int gpsQueries = 0;
+	private int gpsQueries, remaining;
 
 	public void onCreate() {
 		super.onCreate();
@@ -38,45 +39,50 @@ public class UpdateService extends Service implements LocationListener {
 		}
 		settings = getSharedPreferences(Utils.PREFS_NAME, 0);
 		locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		setRemaining(1);
+		gpsQueries = 0;
+		remaining = 0;
 	}
 
 	public void onStart(Intent intent, int startId) {
 		Log.w(LOG, "onStart " + intent);
-		if (intent != null && ACTION_UPDATE.equals(intent.getAction())) {
-			if (!isRunning()) {
+		if (intent != null) {
+			if (!isRunning() && ACTION_UPDATE.equals(intent.getAction())) {
 				locationManager.removeUpdates(this);
-				setRemaining(1);
+				remaining = 0;
 				gpsQueries = 0;
-			} else {
+			} else if (isRunning()) {
 				update();
 			}
-		} else if (intent != null) {
-			update();
 		}
 	}
 
 	private void update() {
-		Log.d(LOG, "update");
+		Log.i(LOG, "update");
 		if (isRunning()) {
-			int remaining = settings.getInt(Configuration.remaining.toString(), 0) - 1;
-			LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
-			if (!service.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-				updateText(R.id.saved, getResources().getString(R.string.activiateGPS));
-			} else {
-				if (remaining == 0) {
-					Criteria criteria = new Criteria();
-					String provider = locationManager.getBestProvider(criteria, false);
-					locationManager.requestLocationUpdates(provider, 1000, 0, this);
-					updateText(R.id.saved, getResources().getString(R.string.waiting));
-				} else if (remaining > 0) {
-					updateText(R.id.saved, getResources().getString(R.string.next, remaining));
+			if (remaining == 0) {
+				Criteria criteria = new Criteria();
+				String provider = locationManager.getBestProvider(criteria, false);
+				locationManager.requestLocationUpdates(provider, 1000, 0, this);
+				remaining--;
+			} else if (isGPSActivated()) {
+				if (remaining > 0) {
+					updateText(R.id.saved, getResources().getString(R.string.next, remaining + 1));
 				} else {
-					updateText(R.id.saved, getResources().getString(R.string.waiting_iteration, Math.abs(remaining)));
+					updateText(R.id.saved, getResources().getString(R.string.waiting_iteration, Math.abs(remaining + 1)));
 				}
-				setRemaining(remaining);
+				remaining--;
 			}
 		}
+	}
+
+	private boolean isGPSActivated() {
+		boolean result = false;
+		LocationManager service = (LocationManager) getSystemService(LOCATION_SERVICE);
+		result = service.isProviderEnabled(LocationManager.GPS_PROVIDER);
+		if (!result) {
+			updateText(R.id.saved, getResources().getString(R.string.activiateGPS));
+		}
+		return result;
 	}
 
 	private void updateText(int field, String text) {
@@ -98,7 +104,7 @@ public class UpdateService extends Service implements LocationListener {
 			locationManager.removeUpdates(this);
 			updateText(R.id.current, Utils.formatLocation(location));
 			updateText(R.id.saved, getString(R.string.saved));
-			setRemaining(Factory.cycleTime);
+			remaining = Factory.cycleTime;
 			gpsQueries = 0;
 		}
 	}
@@ -107,24 +113,22 @@ public class UpdateService extends Service implements LocationListener {
 		return settings.getBoolean(Configuration.running.toString(), false);
 	}
 
-	public int getRemaining() {
-		return settings.getInt(Configuration.remaining.toString(), 1);
-	}
-
-	public void setRemaining(int time) {
-		Log.i(LOG, "Set remaining time " + time);
-		SharedPreferences.Editor editor = settings.edit();
-		editor.putInt(Configuration.remaining.toString(), time);
-		editor.commit();
-	}
-
 	public void onProviderDisabled(String provider) {
+		Log.i(LOG, "onProviderDisabled " + provider);
+		update();
 	}
 
 	public void onProviderEnabled(String provider) {
+		Log.i(LOG, "onProviderEnabled " + provider);
+		gpsQueries = 0;
+		update();
 	}
 
 	public void onStatusChanged(String provider, int status, Bundle extras) {
+		Log.e(LOG, "onStatusChanged " + provider + " - " + status);
+		if (status == LocationProvider.OUT_OF_SERVICE || status == LocationProvider.TEMPORARILY_UNAVAILABLE) {
+			gpsQueries = 0;
+		}
 	}
 
 	public IBinder onBind(Intent intent) {

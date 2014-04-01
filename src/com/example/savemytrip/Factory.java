@@ -12,9 +12,9 @@ public class Factory {
 
 	public static final String saveFileName = "SaveMyTrip.csv";
 
-	public static final int cycleTime = 20;
+	public static final int cycleTime = 19;
 
-	public static final int gpsQueryNumber = 3;
+	public static final int gpsQueryNumber = 5;
 
 	private static File localDirecory, saveFile;
 

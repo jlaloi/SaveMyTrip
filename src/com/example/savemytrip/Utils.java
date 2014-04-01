@@ -29,7 +29,7 @@ public class Utils {
 	public static NumberFormat formatter;
 
 	public static enum Configuration {
-		running, remaining
+		running
 	};
 
 	static {
