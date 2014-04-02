@@ -7,6 +7,7 @@ import java.util.List;
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -18,6 +19,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.LatLngBounds.Builder;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MainActivity extends Activity {
 
@@ -26,6 +28,7 @@ public class MainActivity extends Activity {
 
 	private GoogleMap googleMap;
 	private List<File> files;
+	private boolean showLine = true;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -43,16 +46,37 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_VOLUME_DOWN:
+			if (selectedFile != null) {
+				showLine = !showLine;
+				load(selectedFile);
+				return true;
+			}
+		}
+		return super.onKeyDown(keyCode, event);
+	}
+
 	private void load(File file) {
 		googleMap.clear();
 		Builder boundsBuilder = new LatLngBounds.Builder();
 		try {
+			LatLng lastLatLng = null;
 			for (String line : Utils.getFileLines(file)) {
 				String cols[] = line.split(Factory.columnSeparator);
 				if (cols.length > 2) {
 					LatLng latLng = new LatLng(Double.valueOf(cols[1]), Double.valueOf(cols[2]));
-					googleMap.addMarker(new MarkerOptions().position(latLng).title(cols[0]));
+					MarkerOptions marker = new MarkerOptions().position(latLng).title(cols[0]);
+					googleMap.addMarker(marker);
 					boundsBuilder.include(latLng);
+					if (showLine) {
+						if (lastLatLng != null) {
+							PolylineOptions polylineOptions = new PolylineOptions().add(lastLatLng, latLng).width(5).color(Factory.markerLineColor);
+							googleMap.addPolyline(polylineOptions);
+						}
+						lastLatLng = latLng;
+					}
 				}
 			}
 		} catch (Exception e) {

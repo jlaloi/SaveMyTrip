@@ -2,6 +2,7 @@ package com.example.savemytrip;
 
 import java.io.File;
 
+import android.graphics.Color;
 import android.os.Environment;
 
 public class Factory {
@@ -15,6 +16,8 @@ public class Factory {
 	public static final int cycleTime = 19;
 
 	public static final int gpsQueryNumber = 5;
+	
+	public static int markerLineColor = Color.parseColor("#D358F7");
 
 	private static File localDirecory, saveFile;
 
