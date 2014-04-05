@@ -13,6 +13,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -80,6 +81,7 @@ public class Utils {
 				result.add(file);
 			}
 		}
+		Collections.sort(result);
 		return result;
 	}
 
