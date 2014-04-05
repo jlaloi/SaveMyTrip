@@ -68,7 +68,7 @@ public class UpdateService extends Service implements LocationListener {
 				if (remaining > 0) {
 					updateText(R.id.saved, getResources().getString(R.string.next, remaining + 1));
 				} else {
-					updateText(R.id.saved, getResources().getString(R.string.waiting_iteration, Math.abs(remaining + 1)));
+					updateText(R.id.saved, getResources().getString(R.string.waiting_iteration, Math.abs(remaining + 1), Factory.gpsQueryNumber - gpsQueries));
 				}
 				remaining--;
 			}
@@ -106,6 +106,8 @@ public class UpdateService extends Service implements LocationListener {
 			updateText(R.id.saved, getString(R.string.saved));
 			remaining = Factory.cycleTime;
 			gpsQueries = 0;
+		} else {
+			updateText(R.id.saved, getString(R.string.waiting_iteration, Math.abs(remaining + 1), Factory.gpsQueryNumber - gpsQueries));
 		}
 	}
 

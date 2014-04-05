@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
 
 	private GoogleMap googleMap;
 	private List<File> files;
-	private boolean showLine = true;
+	private static boolean showLine = true;
 
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);

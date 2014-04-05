@@ -20,7 +20,7 @@ public class Factory {
 
 	public static final int cycleTime = 19;
 
-	public static final int gpsQueryNumber = 5;
+	public static final int gpsQueryNumber = 20;
 
 	public static final String saveFileDateFormat = "yyyyMMdd";
 
